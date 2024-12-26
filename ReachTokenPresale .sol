@@ -19,7 +19,7 @@ contract ReachTokenPresale {
     mapping(address => uint256) public balances;
     mapping(address => uint256) public lockedTokens;
 
-    event TokenPurchased(address indexed buyer, uint256 amount, uint256 phase);
+    event TokenPurchase(address indexed buyer, uint256 amount, uint256 phase);
 
     constructor() {
         owner = msg.sender;
@@ -40,9 +40,12 @@ contract ReachTokenPresale {
         require(price > 0, "Presale is over");
 
         uint256 tokens = msg.value / price;
-        balances[msg.sender] += tokens;
+        require(totalSupply >= tokens, "Not enough tokens available");
 
-        emit TokenPurchased(msg.sender, tokens, getCurrentPhase());
+        balances[msg.sender] += tokens;
+        totalSupply -= tokens;
+
+        emit TokenPurchase(msg.sender, tokens, getCurrentPhase());
     }
 
     function getCurrentPhasePrice() public view returns (uint256) {
@@ -73,5 +76,9 @@ contract ReachTokenPresale {
         phase1EndDate = _phase1End;
         phase2EndDate = _phase2End;
         phase3EndDate = _phase3End;
+    }
+
+    function withdraw() public onlyOwner {
+        payable(owner).transfer(address(this).balance);
     }
 }
